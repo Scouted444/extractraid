@@ -1,0 +1,17 @@
+com\doorknob\extractraid\MapData$SpawnPoint.class
+com\doorknob\extractraid\Raid.class
+com\doorknob\extractraid\Msg.class
+com\doorknob\extractraid\MapData$ExtractPoint.class
+com\doorknob\extractraid\LootManager.class
+com\doorknob\extractraid\Raid$State.class
+com\doorknob\extractraid\LootManager$Entry.class
+com\doorknob\extractraid\LootManager$Table.class
+com\doorknob\extractraid\ExtractPlugin.class
+com\doorknob\extractraid\MapData$LootPoint.class
+com\doorknob\extractraid\RaidListener.class
+com\doorknob\extractraid\MapData.class
+com\doorknob\extractraid\RaidManager.class
+com\doorknob\extractraid\Commands.class
+com\doorknob\extractraid\StashManager.class
+com\doorknob\extractraid\RaidManager$1.class
+com\doorknob\extractraid\StashManager$StashHolder.class

@@ -1,0 +1,23 @@
+name: ExtractRaid
+version: 1.0.0
+main: com.doorknob.extractraid.ExtractPlugin
+api-version: '1.21'
+description: Instanced extraction raids with a persistent stash
+author: Doorknob Interactive
+
+commands:
+  raid:
+    description: Queue for a raid
+    usage: /raid [queue|scav|leave|status]
+  stash:
+    description: Open your persistent stash (hub only)
+    usage: /stash
+  raidadmin:
+    description: ExtractRaid admin tools
+    usage: /raidadmin [subcommand]
+    permission: extractraid.admin
+
+permissions:
+  extractraid.admin:
+    description: Manage the raid map and queue
+    default: op
