@@ -6,46 +6,58 @@ Instanced extraction raids for Paper 1.21.x. Players keep a persistent stash in 
 
 ## What it does
 
-- **Hub + stash**: `/stash` opens a 54-slot personal chest (hub only). Hub is protected: no damage, hunger, building, mobs or item dropping.
-- **Queue**: `/raid queue` (go in with your inventory), `/raid scav` (empty inventory, get a junk kit, free to lose), `/raid leave`, `/raid status`. Countdown starts at `min-players`, or immediately at `max-players`.
+- **Lobby with pads**: `/raidadmin lobby create` builds a finished lobby in its own void world. Players walk onto colored pads: green = queue, orange = scav run, blue = stash, red = leave queue. Commands (`/raid queue`, `/raid scav`, `/stash`, `/raid leave`) work too.
 - **Instanced raids**: the `raid_template` world folder is copied to `xr_<n>` for each raid and deleted afterwards. Nothing persists between raids.
-- **Loot**: registered chests are refilled from weighted loot tables at raid start.
-- **Mobs**: spawned at random surface spots at raid start; natural spawning is off in raids.
-- **Shrinking border**: phases in `config.yml`, vanilla border damage outside.
-- **Extraction**: a random subset of your registered zones opens after a delay. Stand inside for 10 seconds (taking damage resets it) to return to the hub with your gear.
+- **Rarity loot**: six rarity pools (junk, common, uncommon, rare, epic, legendary) plus themed pools, and mixed tables (`loose`, `standard`, `supply`, `military_crate`, `vault`, `jackpot`) that roll a rarity per item. Items can carry enchantments and a colored rarity line in their lore.
+- **Mobs**, **shrinking border**, **extraction zones** (hold 10 seconds, damage cancels), **spawn protection**, **scav runs**.
 - **Losing**: dying drops your gear where you died. Logging out inside a raid drops it too. Anyone still inside at the time limit is MIA and loses everything. Ender chests and portals are blocked in raids. Dead players respawn in the hub.
 
-## Install
+## Install (exaroton)
 
-1. Install JDK 21 and Maven (Windows): `winget install EclipseAdoptium.Temurin.21.JDK` and `winget install Apache.Maven`, then open a new terminal.
-2. Run `build.bat` in this folder. Result: `target\ExtractRaid.jar`.
-3. Download Paper 1.21.4 (or newer 1.21.x) from papermc.io, rename it `paper.jar`, put it in a server folder with `server\start.bat`.
-4. Run `start.bat` once, accept the EULA in `eula.txt`, then put `ExtractRaid.jar` in `plugins\`.
-5. Recommended `server.properties`: `spawn-protection=0`, `view-distance=8`, `simulation-distance=6`, `pvp=true`, `difficulty=normal`.
-6. Optional but strongly recommended: the Chunky plugin to pregenerate the template map (`/chunky radius 300`, `/chunky start`), otherwise the first raids will lag generating terrain.
+1. Build the jar on your PC: install JDK 21 and Maven, then run `build.bat`. The jar is `target\ExtractRaid.jar`.
+2. In exaroton, set the software to **Paper 1.21.4**, upload the jar to the `plugins` folder, start the server and `op` yourself.
+3. `spawn-protection=0`, `view-distance=8`, `simulation-distance=6` in server.properties are recommended.
 
-## First-time map setup (as op)
+Local servers: use `server\start.bat` with a Paper jar named `paper.jar`.
 
-1. Build or import your raid map:
-   - Existing map: copy its world folder into the server root and name it `raid_template`.
-   - From scratch: run `/raidadmin template`. It creates `raid_template` if missing and puts you there in creative.
-2. Stand where players should be able to extract and run `/raidadmin addextract Quarry 4` (name, radius in blocks). Add at least 3-5 zones around the map. `active-extract-points` of them are chosen per raid.
-3. Place chests or barrels, look at each one and run `/raidadmin addloot common` (or `military` / `rare`). They are cleared and refilled each raid.
-4. Optional: `/raidadmin addspawn` where you want players to start. With none set, players spawn at random surface positions.
-5. Make sure the map fits inside the border (`raid.border.start-size`, centered on `center-x` / `center-z`).
-6. `/raidadmin savetemplate` to save and unload the template. Re-run `/raidadmin template` whenever you want to edit it.
-7. In your hub (the main world or a lobby build), stand at the spawn spot and run `/raidadmin sethub`.
-8. Test alone: set `queue.min-players: 1` in `config.yml`, `/raidadmin reload`, then `/raid queue`.
+## Making the map (fast way)
 
-## Admin commands
+1. `/raidadmin lobby create` for the hub. Done: it sets the hub, builds the platform and places the pads.
+2. `/raidadmin template` (or `template flat` / `template void` for a builder-friendly blank map). If you already have a map, copy its world folder to the server root as `raid_template` before running this.
+3. Build or import your map. Make sure it fits the border (`raid.border.start-size`, default 500, centered on 0,0).
+4. `/raidadmin autoloot 150 standard` registers every chest and barrel within 150 blocks of you as the `standard` table. Run it again with a different table near special buildings, e.g. `/raidadmin autoloot 20 vault` next to a bunker. The later command wins for containers it covers.
+5. `/raidadmin wand` gives you the Setup Wand for fine-tuning (see below). `/raidadmin show` previews everything with particles so you can see what is registered.
+6. Add extraction zones with the wand (EXTRACT mode, right-click the ground) or `/raidadmin addextract`. Put 4-6 around the map; 3 are chosen per raid.
+7. `/raidadmin pregen 300` generates the chunks so raids do not lag on first load, then `/raidadmin savetemplate`.
+8. `/raidadmin info` shows a checklist of what is still missing. To test alone: `queue.min-players: 1` in `config.yml`, `/raidadmin reload`, then step on the green pad.
 
-`/raidadmin template`, `savetemplate`, `sethub`, `addextract [name] [radius]`, `delextract [name]`, `addloot [table]`, `delloot`, `addspawn`, `clearspawns`, `info`, `reload`, `start` (force-start the queue), `endall` (end all raids, players keep their gear). Permission: `extractraid.admin` (op by default, grant with LuckPerms).
+### The Setup Wand (blaze rod, template world only)
+
+- Left-click: next mode (LOOT, EXTRACT, SPAWN)
+- Shift + left-click: LOOT = next loot table, EXTRACT = next radius
+- Right-click a block: LOOT registers that container with the selected table, EXTRACT puts a zone on top of the block, SPAWN adds a player spawn point
+- Shift + right-click: removes that loot container, the nearest zone (within 15 blocks), or the nearest spawn point
+
+## Rarities and loot tables
+
+Everything is in `config.yml` under `loot-tables`.
+
+- **Item pools**: `"MATERIAL:amount:weight"` or `"MATERIAL:amount:weight:ENCHANT=level,ENCHANT=level"`, e.g. `"DIAMOND_SWORD:1:4:SHARPNESS=4,UNBREAKING=3"` or `"ENCHANTED_BOOK:1:3:MENDING=1"`. `label` is the rarity line in the item lore, `color` is the preview particle color.
+- **Mixed tables**: a `mix:` map of pool name to weight. Each roll picks a pool by weight, then an item from it. Example: `vault` is 40% rare, 40% epic, 10% legendary, 10% valuables. Add your own tiers or tables freely and use them in `autoloot` and the wand.
+- Set `rarity-lore: false` if you do not want rarity lore (items of different rarities then stack).
+
+## Commands
+
+Players: `/raid queue|scav|leave|status`, `/stash`.
+
+Admins (`extractraid.admin`, op by default): `/raidadmin info`, `lobby create|build [radius]`, `template [normal|flat|void]`, `savetemplate`, `wand`, `show`, `autoloot [radius] [table]`, `pregen [radius]`, `addextract [name] [radius]` (both optional), `delextract`, `addloot [table]`, `delloot`, `clearloot`, `addspawn`, `clearspawns`, `pad [queue|scav|stash|leave]`, `delpad`, `sethub`, `reload`, `start`, `endall`.
 
 ## Known limits
 
-- The hub should not be a survival world players can leave. Keep the main world as a protected lobby.
+- `lobby build` clears 5 blocks of space above the platform where you stand. Prefer `lobby create`, which uses its own empty world.
+- Double chests count as two registered containers; both halves are refilled, which is harmless.
 - Items dropped on death despawn after Minecraft's normal 5 minutes.
-- The stash saves on every click and on close, but a hard server crash while a stash is open can still lose a few seconds of changes.
-- Changing `stash.rows` to a smaller value moves overflow items into free slots, so lower it only when stashes are mostly empty.
-- Tested target is Paper 1.21.4 API. Newer 1.21.x should load it because `api-version` is 1.21.
-- Custom items, matchmaking by gear score, insurance and a shop are not included yet. Good next steps.
+- The stash saves on every click and on close, but a hard crash while a stash is open can lose a few seconds of changes.
+- Lowering `stash.rows` moves overflow items into free slots, so only do it when stashes are mostly empty.
+- Built against the Paper 1.21.4 API. Newer 1.21.x should load it, but rebuild and test before putting players on it.
+- Not included yet: shop, insurance, custom item models, gear-based matchmaking, multiple maps or lobbies.
